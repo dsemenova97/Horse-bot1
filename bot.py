@@ -18,7 +18,7 @@ PRODUCTS = {
     },
     "guide2": {
         "title": "Гайд по икс-образности",
-        "price": 249000,
+        "price": 249000,  # 2490₽
         "type": "file",
         "file": "guide2.pdf",
         "description": "Методика коррекции задних ног"
@@ -31,6 +31,9 @@ PRODUCTS = {
         "description": "Доступ в закрытый Telegram-канал"
     }
 }
+
+# ===== ПЕРЕМЕННАЯ ДЛЯ ХРАНЕНИЯ ВЫБОРА ПОЛЬЗОВАТЕЛЯ =====
+user_selection = {}  # key: chat_id, value: product_key
 
 # ===== СТАРТ =====
 @bot.message_handler(commands=['start'])
@@ -70,26 +73,56 @@ def show_course(message):
 
     bot.send_message(message.chat.id, text, reply_markup=markup)
 
-# ===== СОЗДАНИЕ СЧЁТА =====
-@bot.message_handler(func=lambda m: any(m.text == p["title"] for p in PRODUCTS.values()))
-def create_invoice(message):
-
+# ===== ВЫБОР КОНКРЕТНОГО ПРОДУКТА =====
+@bot.message_handler(func=lambda m: m.text in [p["title"] for p in PRODUCTS.values()])
+def select_product(message):
+    chat_id = message.chat.id
+    selected_key = None
     for key, product in PRODUCTS.items():
         if message.text == product["title"]:
-
-            prices = [types.LabeledPrice(product["title"], product["price"])]
-
-            bot.send_invoice(
-                message.chat.id,
-                title=product["title"],
-                description=product["description"],
-                provider_token=PAYMENT_TOKEN,
-                currency="RUB",
-                prices=prices,
-                start_parameter=key,
-                invoice_payload=key
-            )
+            selected_key = key
             break
+
+    if not selected_key:
+        return
+
+    user_selection[chat_id] = selected_key
+
+    product = PRODUCTS[selected_key]
+
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    markup.add("💳 Оплатить")  # кнопка для оплаты
+
+    bot.send_message(
+        chat_id,
+        f"Вы выбрали {product['title']}.\n{product['description']}\nЦена: {product['price']/100}₽\nНажмите кнопку, чтобы оплатить.",
+        reply_markup=markup
+    )
+
+# ===== СОЗДАНИЕ СЧЁТА =====
+@bot.message_handler(func=lambda m: m.text == "💳 Оплатить")
+def create_invoice(message):
+    chat_id = message.chat.id
+    product_key = user_selection.get(chat_id)
+
+    if not product_key:
+        bot.send_message(chat_id, "Сначала выберите гайд или курс.")
+        return
+
+    product = PRODUCTS[product_key]
+
+    prices = [types.LabeledPrice(product["title"], product["price"])]
+
+    bot.send_invoice(
+        chat_id,
+        title=product["title"],
+        description=product["description"],
+        provider_token=PAYMENT_TOKEN,
+        currency="RUB",
+        prices=prices,
+        start_parameter=product_key,
+        invoice_payload=product_key
+    )
 
 # ===== ПОДТВЕРЖДЕНИЕ ПЕРЕД ОПЛАТОЙ =====
 @bot.pre_checkout_query_handler(func=lambda query: True)
@@ -99,7 +132,6 @@ def checkout(pre_checkout_query):
 # ===== УСПЕШНАЯ ОПЛАТА =====
 @bot.message_handler(content_types=['successful_payment'])
 def successful_payment(message):
-
     payload = message.successful_payment.invoice_payload
     product = PRODUCTS.get(payload)
 
@@ -120,10 +152,13 @@ def successful_payment(message):
             f"Вот ссылка на закрытый канал:\n{product['link']}"
         )
 
+    # Предложение ознакомиться с другими продуктами
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    markup.add("📘 Выбрать гайд", "🎓 Выбрать курс")
     bot.send_message(
         message.chat.id,
-        "Рекомендуем ознакомиться с другими продуктами.\n"
-        "Также приглашаем на очные тренировки и мастер-классы."
+        "Рекомендуем ознакомиться с другими продуктами.\nТакже приглашаем на очные тренировки и мастер-классы.",
+        reply_markup=markup
     )
 
 bot.polling()
