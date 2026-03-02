@@ -3,7 +3,8 @@ from telebot import types
 
 # ---------- Настройки бота ----------
 BOT_TOKEN = "ВАШ_BOT_TOKEN"
-PAYMENT_TOKEN = "ВАШ_TEST_PROVIDER_TOKEN"
+PAYMENT_TOKEN = "ВАШ_TEST_PROVIDER_TOKEN"  # Тестовый токен YooKassa
+CURRENCY = "RUB"
 
 bot = telebot.TeleBot(BOT_TOKEN)
 
