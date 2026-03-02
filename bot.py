@@ -19,7 +19,7 @@ GUIDES = {
         "long_desc": "Развернутое описание гида С нуля к доверию...",
         "price": 3999,
         "file": "guide_trust.pdf",
-        "cover": "cover_trust.jpg"
+        "cover": "cover_trust.jpeg"
     },
     "hands": {
         "title": "Гайд по основам работы в руках",
@@ -27,7 +27,7 @@ GUIDES = {
         "long_desc": "Развернутое описание гида по работе в руках...",
         "price": 2499,
         "file": "guide_hands.pdf",
-        "cover": "cover_hands.jpg"
+        "cover": "cover_hands.jpeg"
     }
 }
 
@@ -37,7 +37,7 @@ COURSE = {
     "long_desc": "Развернутое описание курса: аллюры, баланс, психология, аварийное управление...",
     "price": 5499,
     "link": "https://t.me/+закрытый_канал",
-    "cover": "course_cover.jpg"
+    "cover": "course_cover.jpeg"
 }
 
 GIFTS = {
